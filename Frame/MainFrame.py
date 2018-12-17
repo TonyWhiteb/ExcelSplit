@@ -1,10 +1,8 @@
 import sys,os
 import wx
 
-from DropDragCtrl import FileDropCtrl as fdctrl
-from DropDragCtrl import DragandDrop as ddt
-from frame import ListColFrame as lcc
-from frame import TableFrame as tf
+from Control import FileDropCtrl as fdctrl
+from Control import Drag_Drop as ddt
 import  wx.lib.mixins.listctrl  as  listmix
 from collections import defaultdict
 
@@ -17,13 +15,13 @@ except :
 
 class AppFrame(wx.Frame):
 
-    def __init__(self, args,argc,title = 'Demo', file_path = None):
+    def __init__(self, args, argc, title = 'Demo', file_path = None):
 
 
         self.file_path = file_path
-        super(AppFrame, self).__init__(parent = None, id= -1, title = title, pos=(800,400))
-        self.SetClientSize((650,400))
-        frmPanel = wx.Panel(self,-1)
+        super(AppFrame, self).__init__(parent = None, id= -1, title = title, pos=(800, 400))
+        self.SetClientSize((650, 400))
+        frmPanel = wx.Panel(self, -1)
         frmPanel.SetName('frmPanel')
         frmPanel.SetBackgroundColour(wx.WHITE)
         #
@@ -43,10 +41,9 @@ class AppFrame(wx.Frame):
         srcFilesHelpText = 'Drop Files and Links Here'
         self.filedropctrl.WriteHelptext( srcFilesHelpText )
 
-        onButtonListCol = self.OnListColButton
-        onButtonSQL = self.OnSQLButton
+        onButtonSplit = self.OnSplitButton
 
-        self.buttonPanel = ButtonPanel(frmPanel, onButtonListCol = onButtonListCol, onButtonSQL= onButtonSQL)
+        self.buttonPanel = ButtonPanel(frmPanel, onButtonSplit = onButtonSplit)
         #
         #Frame layout control
         #
@@ -67,15 +64,15 @@ class AppFrame(wx.Frame):
         frmPanel.SetSizerAndFit( frmPnl_outerHorzSzr )
         self.Show()
 
-    def OnFilesDropped(self, filenameDropDict):
+    def OnFilesDropped(self, file_dict):
 
         dropTarget = self.filedropctrl.GetDropTarget()
 
-        dropCoord = filenameDropDict[ 'coord' ]                 # Not used as yet.
-        pathList = filenameDropDict[ 'pathList' ]
-        leafFolderList = filenameDropDict[ 'basenameList' ]     # leaf folders, not basenames !
-        commonPathname = filenameDropDict[ 'pathname' ]
-        filetype = filenameDropDict['filetype']
+        dropCoord = file_dict[ 'coord' ]                 # Not used as yet.
+        pathList = file_dict[ 'pathList' ]
+        leafFolderList = file_dict[ 'basename_list' ]     # leaf folders, not basenames !
+        commonPathname = file_dict[ 'file_dictionary' ]
+        filetype = file_dict['file_type']
 
         if (os.name == 'nt')  and  (ntGetShortpathname != None) :
             if (len( commonPathname ) > 40) :             # Set an arbitrary max width.
@@ -113,19 +110,19 @@ class AppFrame(wx.Frame):
 
 
 
-    def OnListColButton(self, event):
-        big_dict = self.filedropctrl.ListCol()
-        ListCol_frame = lcc.ListColFrame(big_dict,self.file_path)
-        list_ctrl = ListCol_frame.ListColInfo(big_dict)
-        ListCol_frame.Show()
+    def OnSplitButton(self, event):
+        currentDictiory = os.getcwd()
+
+        dlg = wx.FileDialog(
+            self, message = 'Save File As',
+            defaultDir = currentDirctory,
+            defaultFile = "", wildcard = "Excel files (*.xlsx)|*.xlsx",
+            style = wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT
+        )
+        pass
         # print(big_dict)
 
-    def OnSQLButton(self, event):
-        SQL_DICT = self.filedropctrl.ListSQL()
-        table_frame = tf.TableFrame(SQL_DICT,self.file_path)
-        select_ctrl = table_frame.ListSelectInfo(SQL_DICT)
-        table_frame.Show()
-        print(SQL_DICT)
+
 
 
 
@@ -135,21 +132,19 @@ class AppFrame(wx.Frame):
 #
 class ButtonPanel(wx.Panel):
 
-    def __init__(self, parent= None, id= -1, onButtonListCol = None, onButtonSQL = None):
+    def __init__(self, parent= None, id= -1, onButtonSplit = None):
 
         super(ButtonPanel, self).__init__(parent = parent, id = id)
 
-        listAllBtn = wx.Button(self, -1, 'List Columns')
-        SQLBtn = wx.Button(self,-1, 'SQL Dictionary')
+        listAllBtn = wx.Button(self, -1, 'Split File')
 
-        listAllBtn.Bind(wx.EVT_LEFT_DOWN, onButtonListCol)
-        SQLBtn.Bind(wx.EVT_LEFT_DOWN, onButtonSQL)
+        listAllBtn.Bind(wx.EVT_LEFT_DOWN, onButtonSplit)
+        # SQLBtn.Bind(wx.EVT_LEFT_DOWN, onButtonSQL)
 
         btnPanel_innerHorzSzr = wx.BoxSizer( wx.HORIZONTAL )
         btnPanel_innerHorzSzr.AddStretchSpacer( prop=1 )
         btnPanel_innerHorzSzr.Add( listAllBtn )
         btnPanel_innerHorzSzr.AddSpacer( 100 )
-        btnPanel_innerHorzSzr.Add( SQLBtn )
 
         btnPanel_innerHorzSzr.AddStretchSpacer( prop=1 )
 
